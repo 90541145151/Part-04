@@ -1,72 +1,72 @@
-const API_KEY = "YOUR_API_KEY"; // Replace with your real API key
-const API_URL = `https://quizapi.io/api/v1/questions?apiKey=${API_KEY}&limit=1`;
-
-const questionEl = document.getElementById("question");
-const answersEl = document.getElementById("answers");
-const nextBtn = document.getElementById("next-btn");
-const correctEl = document.getElementById("correct-count");
-const incorrectEl = document.getElementById("incorrect-count");
-
-let correctAnswerKey = "";
-let score = { correct: 0, incorrect: 0 };
-
-async function loadQuestion() {
-  nextBtn.disabled = true;
-  questionEl.textContent = "Loading...";
-  answersEl.innerHTML = "";
-
-  try {
-    const res = await fetch(API_URL);
-    const data = await res.json();
-    const question = data[0];
-
-    questionEl.textContent = question.question;
-    const correctKeys = Object.entries(question.correct_answers).filter(([key, val]) => val === "true");
-    correctAnswerKey = correctKeys.length > 0 ? correctKeys[0][0].split("_")[0] : "";
-
-    for (const [key, answer] of Object.entries(question.answers)) {
-      if (answer) {
-        const li = document.createElement("li");
-        li.textContent = answer;
-        li.classList.add("answer");
-        li.dataset.key = key;
-        li.addEventListener("click", () => handleAnswer(li, key));
-        answersEl.appendChild(li);
-      }
-    }
-  } catch (err) {
-    questionEl.textContent = "Failed to load question. Try again.";
+const quizData = [
+  {
+    question: "What does HTML stand for?",
+    options: ["HyperText Markup Language", "Home Tool Markup Language", "Hyperlinks and Text Markup Language"],
+    answer: "HyperText Markup Language"
+  },
+  {
+    question: "What year was JavaScript created?",
+    options: ["1995", "2000", "2005"],
+    answer: "1995"
+  },
+  {
+    question: "Which CSS property controls text size?",
+    options: ["font-style", "text-size", "font-size"],
+    answer: "font-size"
   }
-}
+];
 
-function handleAnswer(selectedEl, selectedKey) {
-  const isCorrect = selectedKey === correctAnswerKey;
-  selectedEl.style.backgroundColor = isCorrect ? "#a8e6cf" : "#ff8b94";
+let currentQuestion = 0;
+let score = 0;
 
-  if (isCorrect) {
-    score.correct++;
-  } else {
-    score.incorrect++;
-  }
+const questionEl = document.getElementById('question');
+const optionsEl = document.getElementById('options');
+const nextBtn = document.getElementById('nextBtn');
+const scoreEl = document.getElementById('score');
 
-  updateScore();
-  disableAnswers();
-  nextBtn.disabled = false;
-}
+function loadQuestion() {
+  const currentQuiz = quizData[currentQuestion];
+  questionEl.textContent = currentQuiz.question;
+  optionsEl.innerHTML = "";
 
-function disableAnswers() {
-  document.querySelectorAll(".answer").forEach(el => {
-    el.style.pointerEvents = "none";
+  currentQuiz.options.forEach(option => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.textContent = option;
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
+      div.classList.add('selected');
+    });
+    optionsEl.appendChild(div);
   });
 }
 
-function updateScore() {
-  correctEl.textContent = score.correct;
-  incorrectEl.textContent = score.incorrect;
+function showScore() {
+  questionEl.textContent = "Quiz Completed!";
+  optionsEl.innerHTML = "";
+  nextBtn.style.display = "none";
+  scoreEl.textContent = `Your score: ${score} / ${quizData.length}`;
 }
 
-nextBtn.addEventListener("click", () => {
-  loadQuestion();
+nextBtn.addEventListener('click', () => {
+  const selectedOption = document.querySelector('.option.selected');
+  if (!selectedOption) {
+    alert("Please select an option!");
+    return;
+  }
+
+  if (selectedOption.textContent === quizData[currentQuestion].answer) {
+    score++;
+  }
+
+  currentQuestion++;
+  if (currentQuestion < quizData.length) {
+    loadQuestion();
+  } else {
+    showScore();
+  }
 });
 
-loadQuestion();
+window.addEventListener('DOMContentLoaded', () => {
+  loadQuestion();
+});
